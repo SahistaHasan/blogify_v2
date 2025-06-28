@@ -8,20 +8,8 @@ const app=express();
 
 await connectDB();
 //middlewares
-const allowedOrigins = [
-  'https://blogify-eight-sigma.vercel.app',
-  'https://blogify-p20ytqwsx-blogifys-projects-fd54692c.vercel.app'
-];
-
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: true, // Reflects the request origin
   credentials: true
 }));
 
