@@ -9,7 +9,7 @@ const app=express();
 await connectDB();
 //middlewares
 app.use(cors({
-  origin: 'https://blogify-5naqs0qme-blogifys-projects-fd54692c.vercel.app',
+  origin: 'https://blogify-eight-sigma.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
