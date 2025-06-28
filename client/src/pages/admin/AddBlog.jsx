@@ -4,7 +4,7 @@ import Quill from 'quill';
 import { useAppContext } from '../../context/Appcontext';
 import toast from 'react-hot-toast';
 import {parse} from 'marked'
-import {TailSpin} from 'react-loader-spinner'
+
 
 
 const AddBlog = () => {
@@ -129,13 +129,8 @@ const AddBlog = () => {
          <div ref={editorRef} ></div>
          {loading && (
     <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-      <TailSpin
-        height="30"
-        width="30"
-        color="#6b46c1"
-        ariaLabel="loading"
-      />
-    </div>
+    <div className="loader"></div>
+  </div>
   )}
         <button disabled={loading} className='absolute bottom-1 right-2 ml-2 text-xs text-white
          bg-black/70 px-4 py-1.5 rounded hover:underline cursor-pointer
