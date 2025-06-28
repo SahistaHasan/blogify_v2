@@ -48,7 +48,7 @@ const addComment = async(e)=>{
   const fetchComments=async()=>{
    try{
    const {data}= await axios.post('/api/admin/comments', {blogId:id})
-   if(data.sucess){
+   if(data.success){
     setComments(data.comments);
 
    }
@@ -79,7 +79,7 @@ fetchComments();
         <img src={data.image} alt="" className='rounded-3xl mb-5'/>
         <div className='rich-text max-w-3xl mx-auto' dangerouslySetInnerHTML={{__html:data.description}}></div>
         <div className='mt-14 mb-10 max-w-3xl mx-auto'>
-          <p className='font-semibold mb-4'>Comments  ({comments.length})</p>
+          <p className='font-semibold mb-4'>Comments  {comments.length}</p>
           <div className='flex flex-col gap-4'>
             {comments.map((index)=>(
              <div key={index} className='relative bg-purple-50  max-w-xl p-4 rounded text-gray-600'>
