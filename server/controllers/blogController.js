@@ -20,6 +20,11 @@ export const addBlog = async (req,res)=>{
        if(!title || !description || !category || !imageFile){
         return res.json({success:false, message:"Missing required fields"})
        }
+            
+       const userId = req.user.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized: user not found in token" });
+    }
 
        const fileBuffer = fs.readFileSync(imageFile.path)
        const response = await imagekit.upload({
@@ -47,7 +52,8 @@ export const addBlog = async (req,res)=>{
         description,
         category,
         image,
-        isPublished
+        isPublished,
+        user: userId,
     })
     
        res.json({success:true,message:"Blog added successfully"})
@@ -79,6 +85,9 @@ export const getBlogById =  async(req,res)=>{
         return res.json({success:false, message:"Blog not found"})
 
     }
+     if (!blog.isPublished) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
     res.json({success:true,blog})
 
     }
@@ -91,6 +100,18 @@ export const getBlogById =  async(req,res)=>{
 export const deleteBlogById =  async(req,res)=>{
     try{ 
          const {id} = req.body;
+         const userId = req.user.id; 
+  
+        const blog = await Blog.findOne({ _id: id, user: req.user.id });
+
+        if (!blog) {
+        return res.status(404).json({ success: false, message: "Blog not found" });
+        }
+
+    
+        if (blog.user.toString() !== userId) {
+        return res.status(403).json({ success: false, message: "Access denied: not your blog" });
+        }
 
          await Blog.findByIdAndDelete(id);  
          await comment.deleteMany({blog:id})
@@ -106,7 +127,12 @@ export const deleteBlogById =  async(req,res)=>{
 export const publishToggle=async(req,res)=>{
     try{
         const {id} = req.body;
-        const blog = await Blog.findById(id);
+        const userId = req.user.id;
+        const blog = await Blog.findOne({ _id: id, user: userId });
+
+        if (!blog) {
+        return res.status(404).json({ success: false, message: "Blog not found" });
+        }
         blog.isPublished = !blog.isPublished;
         await blog.save();
 
@@ -135,14 +161,15 @@ export const getBlogComment = async(req,res)=>{
             {createdAt:-1})
             res.json({success:true,comments})
     }
-    catch{
+    catch(error){
         res.json({success:false,message:error.message})
     }
 }
 
 export const getAllBlogsAdmin = async(req,res)=>{
     try{
-      const blogs = await Blog.find({}).sort({createdAt:-1});
+      const userId = req.user.id;
+      const blogs = await Blog.find({user: userId }).sort({createdAt:-1});
       res.json({success:true,blogs})
     }
     catch(error){
@@ -153,10 +180,12 @@ export const getAllBlogsAdmin = async(req,res)=>{
 
     export const getDashboard = async (req,res)=>{
         try{
-            const recentBlogs = await Blog.find({}).sort({createdAt:-1}).limit(5);
-            const blogs = await Blog.countDocuments();
-            const comments = await comment.countDocuments();
-            const drafts = await Blog.countDocuments({isPublished:false})
+            const userId = req.user.id;
+            const recentBlogs = await Blog.find({user: userId}).sort({createdAt:-1}).limit(5);
+            const blogs = await Blog.countDocuments({user: userId});
+            const userBlogIds = await Blog.find({ user: userId }).distinct('_id');
+            const comments = await comment.countDocuments({ blog: { $in: userBlogIds } });
+            const drafts = await Blog.countDocuments({ user: userId, isPublished: false })
 
             const dashboardData={
                 blogs,comments,drafts,recentBlogs
@@ -183,7 +212,13 @@ export const getAllBlogsAdmin = async(req,res)=>{
      export const deleteCommentById = async (req,res) =>{
        try{
         const {id} = req.body;
-        await comment.findByIdAndDelete(id);
+        const userId = req.user.id;
+        const commentToDelete = await comment.findById(id);
+        const blog = await Blog.findById(commentToDelete.blog);
+        if (blog.user.toString() !== userId) {
+        return res.status(403).json({ success: false, message: "Access denied: not your blog" });
+        }
+         await comment.findByIdAndDelete(id);
         res.json({success:true,message:"comment deleted"})
 
        }
@@ -193,7 +228,9 @@ export const getAllBlogsAdmin = async(req,res)=>{
     }
     export const getAllComments=async(req,res)=>{
         try {
-            const allcomments=await comment.find({}).sort({ createdAt: -1 })
+             const userId = req.user.id;
+             const userBlogIds = await Blog.find({ user: userId }).distinct('_id');
+            const allcomments=await comment.find({ blog: { $in: userBlogIds }}).sort({ createdAt: -1 })
       res.json({success:true,allcomments})
         } catch (error) {
             res.json({success:false,message:error.message})
