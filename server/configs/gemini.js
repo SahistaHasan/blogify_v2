@@ -1,14 +1,21 @@
 import { GoogleGenAI } from "@google/genai";
 
-// The client gets the API key from the environment variable `GEMINI_API_KEY`.
-const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API});
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API,
+});
 
 async function main(prompt) {
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    contents: prompt,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt }],
+      },
+    ],
   });
-  return response.text
+
+  return response.candidates[0].content.parts[0].text;
 }
 
-export default main
+export default main;
